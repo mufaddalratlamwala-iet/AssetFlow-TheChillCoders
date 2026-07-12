@@ -39,14 +39,10 @@ const Sidebar = ({ currentScreen, setCurrentScreen, user, onLogout }) => {
                 {/* Disabled nav links representing other features in design */}
                 <div className="pt-4 border-t border-outline-variant/30 mt-4 space-y-1.5 opacity-40 pointer-events-none">
                     <div className="flex items-center gap-4 px-4 py-2 text-xs uppercase tracking-wider font-bold text-on-surface-variant">Future Phases</div>
-                    <div className="flex items-center gap-4 px-4 py-2 text-on-surface-variant font-medium">
-                        <span className="material-symbols-outlined text-[20px]">assignment_ind</span>
-                        <span>Allocation</span>
-                    </div>
-                    <div className="flex items-center gap-4 px-4 py-2 text-on-surface-variant font-medium">
-                        <span className="material-symbols-outlined text-[20px]">build</span>
-                        <span>Maintenance</span>
-                    </div>
+                </div>
+                <NavLink id="allocation" label="Allocation" icon="assignment_ind" />
+                <NavLink id="booking" label="Booking" icon="event" />
+                <div className="space-y-1.5 opacity-40 pointer-events-none">
                     <div className="flex items-center gap-4 px-4 py-2 text-on-surface-variant font-medium">
                         <span className="material-symbols-outlined text-[20px]">fact_check</span>
                         <span>Audit</span>

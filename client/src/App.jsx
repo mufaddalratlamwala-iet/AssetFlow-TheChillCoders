@@ -5,6 +5,8 @@ import AssetDirectory from './components/AssetDirectory';
 import Reports from './components/Reports';
 import Notifications from './components/Notifications';
 import Sidebar from './components/Sidebar';
+import AllocationScreen from './features/allocation/AllocationScreen';
+import BookingScreen from './features/booking/BookingScreen';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -62,6 +64,8 @@ function App() {
       {currentScreen === 'assets' && <AssetDirectory user={user} />}
       {currentScreen === 'reports' && <Reports user={user} />}
       {currentScreen === 'notifications' && <Notifications user={user} />}
+      {currentScreen === 'allocation' && <AllocationScreen user={user} />}
+      {currentScreen === 'booking' && <BookingScreen user={user} />}
     </div>
   );
 }

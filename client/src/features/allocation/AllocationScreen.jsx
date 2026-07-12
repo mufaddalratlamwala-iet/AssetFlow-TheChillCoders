@@ -1,11 +1,76 @@
-import React, { useState } from 'react';
-import Layout from '../../components/Layout';
+import React, { useState, useEffect } from 'react';
 
 const AllocationScreen = () => {
   const [transferType, setTransferType] = useState('Permanent');
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [effectiveDate, setEffectiveDate] = useState('');
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Hardcoded for mockup purposes since we don't have an asset selector in this UI
+  const assetId = "60d5ecb54d6f831e5c8b4567"; // Replace with real asset ID later
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      try {
+        const res = await fetch('http://localhost:5000/api/employees', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEmployees(data.employees || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch employees", err);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  const handleRequestAllocation = async () => {
+    if (!selectedEmployee) {
+      alert("Please select a new custodian.");
+      return;
+    }
+
+    setLoading(true);
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/allocations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          assetId,
+          employeeId: selectedEmployee,
+          expectedReturnDate: transferType === 'Temporary' ? effectiveDate : undefined,
+          notes: reason
+        })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        alert("Allocation successful!");
+        setSelectedEmployee('');
+        setReason('');
+      } else {
+        alert("Failed to allocate: " + (data.message || data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert("Error submitting request.");
+      console.error(err);
+    }
+    setLoading(false);
+  };
 
   return (
-    <Layout>
+    <div className="flex-1 bg-[#f9fafb] text-slate-900 overflow-y-auto w-full h-full p-8">
       <div className="max-w-6xl mx-auto pb-12">
         {/* Page Header */}
         <div className="mb-8">
@@ -63,10 +128,15 @@ const AllocationScreen = () => {
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">New Custodian <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">person</span>
-                      <select className="w-full bg-white text-slate-600 text-sm rounded-lg pl-9 pr-4 py-2.5 border border-slate-300 appearance-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all">
+                      <select 
+                        className="w-full bg-white text-slate-600 text-sm rounded-lg pl-9 pr-4 py-2.5 border border-slate-300 appearance-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
+                        value={selectedEmployee}
+                        onChange={(e) => setSelectedEmployee(e.target.value)}
+                      >
                         <option value="">Select Employee...</option>
-                        <option value="1">Dev B</option>
-                        <option value="2">John Doe</option>
+                        {employees.map(emp => (
+                          <option key={emp._id} value={emp._id}>{emp.user?.name || emp.name || emp._id}</option>
+                        ))}
                       </select>
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
                     </div>
@@ -97,6 +167,8 @@ const AllocationScreen = () => {
                     <div className="relative">
                       <input 
                         type="date" 
+                        value={effectiveDate}
+                        onChange={(e) => setEffectiveDate(e.target.value)}
                         className="w-full bg-white text-slate-600 text-sm rounded-lg px-4 py-2.5 border border-slate-300 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all"
                       />
                     </div>
@@ -109,6 +181,8 @@ const AllocationScreen = () => {
                   <textarea 
                     rows="4" 
                     placeholder="Provide justification for this transfer request..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
                     className="w-full bg-white text-slate-800 text-sm rounded-lg px-4 py-3 border border-slate-300 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all resize-none"
                   ></textarea>
                 </div>
@@ -119,9 +193,13 @@ const AllocationScreen = () => {
                 <button className="text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors px-4 py-2">
                   Discard Changes
                 </button>
-                <button className="bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm shadow-rose-500/20 active:scale-[0.98]">
+                <button 
+                  onClick={handleRequestAllocation}
+                  disabled={loading}
+                  className="bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm shadow-rose-500/20 active:scale-[0.98] disabled:opacity-50"
+                >
                   <span className="material-symbols-outlined text-sm">send</span>
-                  Request Allocation
+                  {loading ? 'Submitting...' : 'Request Allocation'}
                 </button>
               </div>
             </div>
@@ -210,7 +288,7 @@ const AllocationScreen = () => {
 
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
