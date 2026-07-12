@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const AssetDirectory = ({ user }) => {
     const [assets, setAssets] = useState([]);
@@ -35,8 +35,138 @@ const AssetDirectory = ({ user }) => {
         documentUrls: ''
     });
 
+    // AI Extraction State
+    const [aiFile, setAiFile] = useState(null);
+    const [aiExtracting, setAiExtracting] = useState(false);
+    const [aiResult, setAiResult] = useState(null); // raw AI response
+    const [aiError, setAiError] = useState(null);
+    const [aiFilledFields, setAiFilledFields] = useState(new Set()); // track which fields were AI-filled
+    const [isDragOver, setIsDragOver] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const AI_API_URL = 'https://smell-collide-handbag.ngrok-free.dev';
     const API_BASE_URL = 'http://localhost:5000/api';
     const isWriteAuthorized = user?.role === 'Admin' || user?.role === 'Asset Manager';
+
+    // --- AI Extraction Logic ---
+    const matchCategoryByName = useCallback((estimatedCategory) => {
+        if (!estimatedCategory || categories.length === 0) return '';
+        const lower = estimatedCategory.toLowerCase();
+        // Try exact match first, then partial/fuzzy
+        const exact = categories.find(c => c.name.toLowerCase() === lower);
+        if (exact) return exact._id;
+        const partial = categories.find(c => 
+            c.name.toLowerCase().includes(lower) || lower.includes(c.name.toLowerCase())
+        );
+        return partial ? partial._id : '';
+    }, [categories]);
+
+    const handleAiExtract = async (file) => {
+        if (!file) return;
+        setAiFile(file);
+        setAiExtracting(true);
+        setAiError(null);
+        setAiResult(null);
+        setAiFilledFields(new Set());
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch(`${AI_API_URL}/ai/registration/extract`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const errBody = await res.text();
+                throw new Error(errBody || `AI service returned ${res.status}`);
+            }
+
+            const data = await res.json();
+            setAiResult(data);
+
+            // Map AI response fields → form fields, tracking which ones were filled
+            const filled = new Set();
+            const updates = {};
+
+            if (data.product_name || data.asset_name) {
+                const name = data.product_name || data.asset_name;
+                // Combine brand + model if product_name is generic
+                const fullName = data.brand && data.model 
+                    ? `${data.brand} ${data.model}` 
+                    : name;
+                updates.name = fullName;
+                filled.add('name');
+            }
+            if (data.serial_number) {
+                updates.serialNumber = data.serial_number;
+                filled.add('serialNumber');
+            }
+            if (data.purchase_date) {
+                updates.acquisitionDate = data.purchase_date; // expected YYYY-MM-DD
+                filled.add('acquisitionDate');
+            }
+            if (data.cost != null || data.purchase_cost != null) {
+                updates.acquisitionCost = String(data.cost ?? data.purchase_cost);
+                filled.add('acquisitionCost');
+            }
+            if (data.estimated_category) {
+                const matchedId = matchCategoryByName(data.estimated_category);
+                if (matchedId) {
+                    updates.categoryId = matchedId;
+                    filled.add('categoryId');
+                }
+            }
+            if (data.vendor) {
+                // Store vendor info in documentUrls as contextual note
+                updates.documentUrls = regForm.documentUrls 
+                    ? `${regForm.documentUrls}, Vendor: ${data.vendor}` 
+                    : `Vendor: ${data.vendor}`;
+                filled.add('documentUrls');
+            }
+
+            setRegForm(prev => ({ ...prev, ...updates }));
+            setAiFilledFields(filled);
+
+        } catch (err) {
+            console.error('AI extraction error:', err);
+            setAiError(err.message || 'Failed to connect to AI extraction service');
+        }
+        setAiExtracting(false);
+    };
+
+    const handleFileDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleAiExtract(file);
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) handleAiExtract(file);
+    };
+
+    const clearAiState = () => {
+        setAiFile(null);
+        setAiResult(null);
+        setAiError(null);
+        setAiFilledFields(new Set());
+        setAiExtracting(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    // Helper to render an AI-fill indicator badge next to a field
+    const AiFillBadge = ({ field }) => {
+        if (!aiFilledFields.has(field)) return null;
+        return (
+            <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[9px] font-bold uppercase border border-violet-500/25 animate-pulse" title="Auto-filled by AI">
+                <span className="material-symbols-outlined text-[11px]">auto_awesome</span>
+                AI
+            </span>
+        );
+    };
 
     // Fetch lists
     const fetchAssets = async () => {
@@ -131,6 +261,7 @@ const AssetDirectory = ({ user }) => {
                     photoUrl: '',
                     documentUrls: ''
                 });
+                clearAiState();
                 fetchAssets();
             } else {
                 const err = await res.json();
@@ -567,24 +698,154 @@ const AssetDirectory = ({ user }) => {
                 </div>
             )}
 
-            {/* Asset Registration Modal */}
+            {/* Asset Registration Modal — AI Enhanced */}
             {isRegModalOpen && (
                 <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
                     <div className="bg-surface border border-outline-variant rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                         <div className="bg-surface-container p-6 border-b border-outline-variant flex justify-between items-center">
-                            <h3 className="font-headline text-xl font-bold">Register New Resource</h3>
-                            <button onClick={() => setIsRegModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                            <div className="flex items-center gap-3">
+                                <h3 className="font-headline text-xl font-bold">Register New Resource</h3>
+                                {aiResult && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 text-[10px] font-bold border border-violet-500/25">
+                                        <span className="material-symbols-outlined text-[13px]">auto_awesome</span>
+                                        AI Assisted
+                                    </span>
+                                )}
+                            </div>
+                            <button onClick={() => { setIsRegModalOpen(false); clearAiState(); }} className="text-on-surface-variant hover:text-on-surface cursor-pointer">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
                         <form onSubmit={handleRegisterSubmit} className="overflow-y-auto p-6 space-y-4 flex-1 custom-scrollbar">
+
+                            {/* --- AI Upload Zone --- */}
+                            <div 
+                                className={`relative rounded-xl border-2 border-dashed transition-all duration-300 ${
+                                    isDragOver 
+                                        ? 'border-violet-500 bg-violet-500/10 scale-[1.01]' 
+                                        : aiResult 
+                                            ? 'border-emerald-500/40 bg-emerald-500/5' 
+                                            : aiError 
+                                                ? 'border-rose-500/40 bg-rose-500/5'
+                                                : 'border-outline-variant hover:border-violet-500/50 hover:bg-violet-500/5'
+                                }`}
+                                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                                onDragLeave={() => setIsDragOver(false)}
+                                onDrop={handleFileDrop}
+                            >
+                                <input 
+                                    ref={fileInputRef}
+                                    type="file" 
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                    className="hidden"
+                                    onChange={handleFileSelect}
+                                />
+
+                                {aiExtracting ? (
+                                    /* Extracting State */
+                                    <div className="flex flex-col items-center justify-center py-6 px-4">
+                                        <div className="relative mb-3">
+                                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-violet-500/30 border-t-violet-500"></div>
+                                            <span className="material-symbols-outlined text-violet-400 text-[18px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">auto_awesome</span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-violet-400">AI is analyzing your document...</p>
+                                        <p className="text-[11px] text-on-surface-variant mt-1">{aiFile?.name}</p>
+                                    </div>
+                                ) : aiResult ? (
+                                    /* Success State */
+                                    <div className="flex items-center justify-between py-4 px-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-emerald-400">Fields extracted successfully</p>
+                                                <p className="text-[11px] text-on-surface-variant">{aiFile?.name} · Confidence: {Math.round((aiResult.confidence || 0) * 100)}%</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {/* Confidence meter */}
+                                            <div className="w-16 h-1.5 bg-surface-variant rounded-full overflow-hidden" title={`${Math.round((aiResult.confidence || 0) * 100)}% confidence`}>
+                                                <div 
+                                                    className={`h-full rounded-full transition-all ${
+                                                        (aiResult.confidence || 0) >= 0.8 ? 'bg-emerald-500' : 
+                                                        (aiResult.confidence || 0) >= 0.5 ? 'bg-amber-500' : 'bg-rose-500'
+                                                    }`}
+                                                    style={{ width: `${Math.round((aiResult.confidence || 0) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => { clearAiState(); }}
+                                                className="text-xs text-on-surface-variant hover:text-rose-400 transition-colors cursor-pointer font-semibold"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : aiError ? (
+                                    /* Error State */
+                                    <div className="flex items-center justify-between py-4 px-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-rose-400 text-[20px]">error</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-rose-400">Extraction failed</p>
+                                                <p className="text-[11px] text-on-surface-variant max-w-sm truncate">{aiError}</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => { clearAiState(); fileInputRef.current?.click(); }}
+                                            className="text-xs text-violet-400 hover:text-violet-300 transition-colors cursor-pointer font-bold"
+                                        >
+                                            Try Again
+                                        </button>
+                                    </div>
+                                ) : (
+                                    /* Default Upload State */
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full flex flex-col items-center justify-center py-6 px-4 cursor-pointer group"
+                                    >
+                                        <div className="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-violet-500/20 transition-all">
+                                            <span className="material-symbols-outlined text-violet-400 text-[28px]">auto_awesome</span>
+                                        </div>
+                                        <p className="text-sm font-bold text-on-surface">Auto-fill with AI</p>
+                                        <p className="text-[11px] text-on-surface-variant mt-1">
+                                            Drag & drop an invoice, receipt, or asset photo — or <span className="text-violet-400 font-semibold">browse files</span>
+                                        </p>
+                                        <p className="text-[10px] text-on-surface-variant/60 mt-1.5">Supports PDF, JPG, PNG · Max 10 MB</p>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* --- Needs Review Warning Banner --- */}
+                            {aiResult?.needs_review && (
+                                <div className="flex items-start gap-3 p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                                    <span className="material-symbols-outlined text-amber-400 text-[20px] mt-0.5 shrink-0">warning</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-400">Review required</p>
+                                        <p className="text-[11px] text-on-surface-variant mt-0.5">
+                                            The AI confidence is low or some core fields could not be extracted. Please verify all auto-filled values before saving.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- Form Fields with AI Badge indicators --- */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Asset Name*</label>
+                                    <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                        Asset Name*
+                                        <AiFillBadge field="name" />
+                                    </label>
                                     <input
                                         type="text"
                                         required
-                                        className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary"
+                                        className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary ${aiFilledFields.has('name') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                         placeholder="e.g. MacBook Pro 16"
                                         value={regForm.name}
                                         onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
@@ -592,9 +853,17 @@ const AssetDirectory = ({ user }) => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Asset Category</label>
+                                    <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                        Asset Category
+                                        <AiFillBadge field="categoryId" />
+                                        {aiResult?.estimated_category && !aiFilledFields.has('categoryId') && (
+                                            <span className="ml-1.5 text-[9px] text-amber-400 font-normal" title="AI suggested this category but no match was found in your system">
+                                                (AI suggested: {aiResult.estimated_category})
+                                            </span>
+                                        )}
+                                    </label>
                                     <select
-                                        className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary cursor-pointer"
+                                        className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary cursor-pointer ${aiFilledFields.has('categoryId') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                         value={regForm.categoryId}
                                         onChange={(e) => setRegForm({ ...regForm, categoryId: e.target.value })}
                                     >
@@ -606,10 +875,13 @@ const AssetDirectory = ({ user }) => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Serial Number</label>
+                                    <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                        Serial Number
+                                        <AiFillBadge field="serialNumber" />
+                                    </label>
                                     <input
                                         type="text"
-                                        className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary"
+                                        className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary ${aiFilledFields.has('serialNumber') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                         placeholder="e.g. C02X874KMD6M"
                                         value={regForm.serialNumber}
                                         onChange={(e) => setRegForm({ ...regForm, serialNumber: e.target.value })}
@@ -628,20 +900,26 @@ const AssetDirectory = ({ user }) => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Acquisition Date</label>
+                                    <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                        Acquisition Date
+                                        <AiFillBadge field="acquisitionDate" />
+                                    </label>
                                     <input
                                         type="date"
-                                        className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary"
+                                        className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary ${aiFilledFields.has('acquisitionDate') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                         value={regForm.acquisitionDate}
                                         onChange={(e) => setRegForm({ ...regForm, acquisitionDate: e.target.value })}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-on-surface-variant mb-1">Acquisition Cost ($)</label>
+                                    <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                        Acquisition Cost ($)
+                                        <AiFillBadge field="acquisitionCost" />
+                                    </label>
                                     <input
                                         type="number"
-                                        className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary"
+                                        className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary ${aiFilledFields.has('acquisitionCost') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                         placeholder="e.g. 2400"
                                         value={regForm.acquisitionCost}
                                         onChange={(e) => setRegForm({ ...regForm, acquisitionCost: e.target.value })}
@@ -675,15 +953,32 @@ const AssetDirectory = ({ user }) => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-on-surface-variant mb-1">Document URLs (Comma separated)</label>
+                                <label className="flex items-center text-xs font-semibold text-on-surface-variant mb-1">
+                                    Document URLs / Vendor Info
+                                    <AiFillBadge field="documentUrls" />
+                                </label>
                                 <input
                                     type="text"
-                                    className="w-full bg-surface-variant border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary"
+                                    className={`w-full bg-surface-variant border rounded-lg px-4 py-2 text-on-surface focus:outline-none focus:border-primary ${aiFilledFields.has('documentUrls') ? 'border-violet-500/40' : 'border-outline-variant'}`}
                                     placeholder="e.g. http://manuals.com/doc1.pdf, http://invoice.com/inv.pdf"
                                     value={regForm.documentUrls}
                                     onChange={(e) => setRegForm({ ...regForm, documentUrls: e.target.value })}
                                 />
                             </div>
+
+                            {/* AI Extraction Details — collapsible raw data section */}
+                            {aiResult && (
+                                <details className="rounded-lg border border-outline-variant overflow-hidden group">
+                                    <summary className="flex items-center gap-2 px-4 py-2.5 bg-surface-container/40 cursor-pointer text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-colors select-none">
+                                        <span className="material-symbols-outlined text-[16px] text-violet-400">data_object</span>
+                                        Raw AI Extraction Data
+                                        <span className="material-symbols-outlined text-[16px] ml-auto group-open:rotate-180 transition-transform">expand_more</span>
+                                    </summary>
+                                    <div className="px-4 py-3 bg-surface-variant/30 text-[11px] font-mono text-on-surface-variant overflow-x-auto">
+                                        <pre className="whitespace-pre-wrap">{JSON.stringify(aiResult, null, 2)}</pre>
+                                    </div>
+                                </details>
+                            )}
 
                             <div className="flex items-center gap-3 pt-2">
                                 <input
@@ -699,8 +994,8 @@ const AssetDirectory = ({ user }) => {
                             </div>
 
                             <div className="flex justify-end gap-3 pt-6 border-t border-outline-variant">
-                                <button type="button" onClick={() => setIsRegModalOpen(false)} className="px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant font-medium">Cancel</button>
-                                <button type="submit" className="px-6 py-2 rounded-lg bg-primary text-white font-semibold hover:brightness-110 shadow-md shadow-primary/20">Save</button>
+                                <button type="button" onClick={() => { setIsRegModalOpen(false); clearAiState(); }} className="px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant font-medium cursor-pointer">Cancel</button>
+                                <button type="submit" className="px-6 py-2 rounded-lg bg-primary text-white font-semibold hover:brightness-110 shadow-md shadow-primary/20 cursor-pointer">Save</button>
                             </div>
                         </form>
                     </div>
