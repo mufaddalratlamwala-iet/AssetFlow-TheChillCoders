@@ -1,1 +1,66 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #ff2d78;
+  --color-on-primary: #1a0010;
+  --color-error-container: #3d0f0f;
+  --color-background: #0a0a12;
+  --color-on-secondary-fixed-variant: #004d4d;
+  --color-inverse-on-surface: #0a0a12;
+  --color-on-tertiary: #1a1000;
+  --color-on-secondary-container: #c0fff4;
+  --color-on-tertiary-fixed-variant: #665200;
+  --color-on-secondary-fixed: #001a1a;
+  --color-secondary: #00ffcc;
+  --color-tertiary-fixed: #fff0c0;
+  --color-on-surface: #e8e0f0;
+  --color-on-tertiary-container: #fff0c0;
+  --color-surface-container: #141422;
+  --color-on-primary-container: #ffe0ec;
+  --color-on-background: #e8e0f0;
+  --color-error: #ff4444;
+  --color-on-primary-fixed-variant: #8c0038;
+  --color-inverse-surface: #e8e0f0;
+  --color-surface: #0f0f1a;
+  --color-on-tertiary-fixed: #1a1000;
+  --color-inverse-primary: #8c0038;
+  --color-outline-variant: #302840;
+  --color-outline: #5a5068;
+  --color-on-secondary: #001a1a;
+  --color-tertiary-container: #665200;
+  --color-surface-dim: #0f0f1a;
+  --color-on-error-container: #ffa0a0;
+  --color-primary-container: #b3004e;
+  --color-surface-container-lowest: #0a0a12;
+  --color-surface-container-low: #111118;
+  --color-surface-container-high: #1e1e30;
+  --color-on-primary-fixed: #3d0020;
+  --color-on-surface-variant: #a098b0;
+  --color-surface-bright: #1a1a2e;
+  --color-surface-container-highest: #28283e;
+  --color-primary-fixed-dim: #ff80aa;
+  --color-surface-variant: #1e1e30;
+  --color-on-error: #1a0000;
+  --color-secondary-fixed: #c0fff4;
+  --color-surface-tint: #ff2d78;
+  --color-tertiary-fixed-dim: #ffe04a;
+  --color-secondary-container: #004d3d;
+  --color-secondary-fixed-dim: #00e6b8;
+  --color-primary-fixed: #ffe0ec;
+  --color-tertiary: #ffe04a;
+
+  --font-headline: "Sora", sans-serif;
+  --font-display: "Sora", sans-serif;
+  --font-body: "Sora", sans-serif;
+  --font-label: "Sora", sans-serif;
+}
+
+@utility neon-text-primary {
+  text-shadow: 0 0 8px rgba(255, 45, 120, 0.4);
+}
+
+@utility cyber-grid {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
