@@ -19,6 +19,7 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/asset-categories', require('./routes/assetCategoryRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
 app.use('/api/assets', require('./routes/assetRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
