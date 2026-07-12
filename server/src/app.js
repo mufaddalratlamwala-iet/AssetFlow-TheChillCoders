@@ -15,6 +15,9 @@ app.get('/health', (req, res) => {
 
 // Register API Routes here
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/allocations', require('./routes/allocationRoutes'));
+app.use('/api/transfer-requests', require('./routes/transferRequestRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/asset-categories', require('./routes/assetCategoryRoutes'));
 app.use('/api/employees', require('./routes/employeeRoutes'));
