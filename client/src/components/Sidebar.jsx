@@ -29,6 +29,9 @@ const Sidebar = ({ currentScreen, setCurrentScreen, user, onLogout }) => {
             <nav className="flex-1 px-2 space-y-1.5 overflow-y-auto custom-scrollbar">
                 <NavLink id="org-setup" label="Org Setup" icon="settings_suggest" />
                 <NavLink id="assets" label="Assets" icon="inventory_2" />
+                {user && ['Admin', 'Asset Manager', 'Department Head'].includes(user.role) && (
+                    <NavLink id="reports" label="Reports" icon="analytics" />
+                )}
                 
                 {/* Disabled nav links representing other features in design */}
                 <div className="pt-4 border-t border-outline-variant/30 mt-4 space-y-1.5 opacity-40 pointer-events-none">

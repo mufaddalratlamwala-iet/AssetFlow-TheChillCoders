@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import OrganizationSetup from './components/OrganizationSetup';
 import AssetDirectory from './components/AssetDirectory';
+import Reports from './components/Reports';
 import Sidebar from './components/Sidebar';
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
       />
       {currentScreen === 'org-setup' && <OrganizationSetup user={user} />}
       {currentScreen === 'assets' && <AssetDirectory user={user} />}
+      {currentScreen === 'reports' && <Reports user={user} />}
     </div>
   );
 }
