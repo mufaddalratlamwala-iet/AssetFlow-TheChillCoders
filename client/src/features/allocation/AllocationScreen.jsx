@@ -70,7 +70,7 @@ const AllocationScreen = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#f9fafb] text-slate-900 overflow-y-auto w-full h-full p-8">
+    <div className="ml-[260px] flex-1 bg-[#f9fafb] text-slate-900 overflow-y-auto w-full h-full p-8">
       <div className="max-w-6xl mx-auto pb-12">
         {/* Page Header */}
         <div className="mb-8">
