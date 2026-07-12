@@ -38,10 +38,10 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ error: 'startTime must be before endTime' });
     }
 
-    // Check if asset is bookable
+    // Check if asset exists
     const asset = await Asset.findById(resourceAssetId);
-    if (!asset || !asset.isBookable) {
-      return res.status(400).json({ error: 'Asset is not bookable' });
+    if (!asset) {
+      return res.status(400).json({ error: 'Asset not found' });
     }
 
     // Check for overlaps

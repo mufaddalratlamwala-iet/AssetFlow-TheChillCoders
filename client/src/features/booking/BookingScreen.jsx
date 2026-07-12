@@ -133,7 +133,7 @@ const BookingScreen = () => {
   };
 
   return (
-    <div className="flex-1 bg-white text-slate-900 overflow-y-auto w-full h-full p-8 font-body">
+    <div className="ml-[260px] flex-1 bg-white text-slate-900 overflow-y-auto w-full h-full p-8 font-body">
       
       {/* Header Section */}
       <div className="flex justify-between items-start mb-8">
@@ -148,7 +148,10 @@ const BookingScreen = () => {
             <button className="px-5 py-1.5 text-sm font-bold bg-white text-slate-800 rounded-full shadow-sm">Timeline</button>
             <button className="px-5 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 rounded-full">Calendar</button>
           </div>
-          <button className="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-colors">
+          <button 
+            onClick={() => alert("To create a booking, select an asset from the list below and use the 'Select Time Slot' panel on the right.")}
+            className="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-colors"
+          >
             <span className="material-symbols-outlined text-sm">add</span>
             New Booking
           </button>
