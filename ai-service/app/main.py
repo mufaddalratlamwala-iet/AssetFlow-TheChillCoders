@@ -5,6 +5,13 @@ import uvicorn
 from app.config import settings
 from app.routers import registration, search
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
 app = FastAPI(title="AssetFlow AI Service", version="1.0.0")
 
 app.add_middleware(
