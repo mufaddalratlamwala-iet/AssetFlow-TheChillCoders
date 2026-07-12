@@ -201,3 +201,7 @@ htmlcov/
 .nox/
 .mypy_cache/
 .ruff_cache/
+
+*plan*
+ui-screens/
+*seed.js
