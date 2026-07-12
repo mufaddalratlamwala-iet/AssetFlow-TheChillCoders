@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const OrganizationSetup = ({ user, onLogout }) => {
+const OrganizationSetup = ({ user }) => {
     const [activeTab, setActiveTab] = useState('departments');
     const [departments, setDepartments] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -117,60 +117,17 @@ const OrganizationSetup = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="bg-background text-on-surface font-body text-sm overflow-hidden h-screen flex">
-            {/* Side Navigation */}
-            <aside className="fixed left-0 top-0 h-screen w-[260px] border-r border-outline-variant bg-surface flex flex-col py-6 z-50">
-                <div className="px-6 mb-12">
-                    <h1 className="font-headline text-2xl font-bold text-on-surface tracking-tight">AssetFlow</h1>
-                    <p className="text-on-surface-variant text-[11px] font-semibold uppercase tracking-widest mt-1 opacity-80">Technical Operations</p>
-                </div>
-                <nav className="flex-1 px-2 space-y-1 overflow-y-auto custom-scrollbar">
-                    <a className="flex items-center gap-4 px-4 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 active:scale-95 cursor-pointer">
-                        <span className="material-symbols-outlined">dashboard</span>
-                        <span>Dashboard</span>
-                    </a>
-                    <a className="flex items-center gap-4 px-4 py-2 rounded-lg text-primary font-bold bg-primary/10 transition-colors duration-200 active:scale-95 cursor-pointer">
-                        <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>settings_suggest</span>
-                        <span>Org Setup</span>
-                    </a>
-                    <a className="flex items-center gap-4 px-4 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 active:scale-95 cursor-pointer">
-                        <span className="material-symbols-outlined">inventory_2</span>
-                        <span>Assets</span>
-                    </a>
-                    <a className="flex items-center gap-4 px-4 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 active:scale-95 cursor-pointer">
-                        <span className="material-symbols-outlined">assignment_ind</span>
-                        <span>Allocation</span>
-                    </a>
-                </nav>
-                <div className="px-6 pt-6 border-t border-outline-variant flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full border border-outline-variant overflow-hidden flex items-center justify-center bg-primary/20 text-primary font-bold">
-                        {user?.name?.charAt(0) || 'U'}
-                    </div>
-                    <div className="overflow-hidden flex-1">
-                        <p className="text-on-surface font-semibold truncate">{user?.name || 'Admin User'}</p>
-                        <p className="text-on-surface-variant text-[11px] truncate">{user?.role || 'Enterprise Admin'}</p>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content Area */}
+        <>
             <main className="ml-[260px] flex-1 flex flex-col h-screen relative bg-background">
-                {/* Top Navigation Bar */}
-                <header className="h-16 flex justify-between items-center px-8 w-full border-b border-outline-variant bg-surface z-40">
-                    <div className="flex items-center gap-6">
-                        <div className="relative group">
-                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-                            <input className="bg-surface-variant border border-outline-variant rounded-lg pl-10 pr-12 py-1 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all w-64 group-hover:w-80" placeholder="Search organization..." type="text"/>
-                        </div>
+            {/* Top Navigation Bar */}
+            <header className="h-16 flex justify-between items-center px-8 w-full border-b border-outline-variant bg-surface z-40">
+                <div className="flex items-center gap-6">
+                    <div className="relative group">
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                        <input className="bg-surface-variant border border-outline-variant rounded-lg pl-10 pr-12 py-1 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all w-64 group-hover:w-80" placeholder="Search organization..." type="text"/>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-4">
-                            <button onClick={onLogout} title="Logout" className="p-2 rounded-lg text-on-surface-variant hover:text-primary transition-colors active:scale-95 relative cursor-pointer">
-                                <span className="material-symbols-outlined">logout</span>
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                </div>
+            </header>
 
                 {/* Content Canvas */}
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -379,7 +336,7 @@ const OrganizationSetup = ({ user, onLogout }) => {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 
