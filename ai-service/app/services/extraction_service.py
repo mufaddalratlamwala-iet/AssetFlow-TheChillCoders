@@ -15,10 +15,7 @@ PDF_MIME_TYPE = "application/pdf"
 
 
 def _build_input_content(file_bytes: bytes, mime_type: str) -> list[dict]:
-    """
-    Builds the multimodal `input` content block for the Responses API,
-    branching on whether the upload is an image or a PDF invoice.
-    """
+
     b64 = base64.b64encode(file_bytes).decode("utf-8")
 
     prompt_text = (
@@ -54,7 +51,7 @@ def _build_input_content(file_bytes: bytes, mime_type: str) -> list[dict]:
 
 
 def _parse_tool_call(response) -> dict:
-    """Pulls the extract_asset_fields function-call arguments out of a Responses API result."""
+    
     for item in response.output:
         if getattr(item, "type", None) == "function_call" and item.name == "extract_asset_fields":
             return json.loads(item.arguments)
@@ -63,6 +60,29 @@ def _parse_tool_call(response) -> dict:
         status_code=502,
         detail="Model did not return a structured extraction. Try again or upload a clearer file.",
     )
+
+
+def _normalize_and_flag(data: dict) -> ExtractedAssetFields:
+
+    string_fields = [
+        "product_name", "brand", "model", "serial_number",
+        "vendor", "estimated_category", "purchase_date",
+    ]
+    for key in string_fields:
+        if data.get(key) == "":
+            data[key] = None
+
+        if data.get("warranty_months") == 0:
+            data["warranty_months"] = None
+            
+    confidence = float(data.get("confidence", 0))
+    identity_fields_present = any(
+        data.get(f) for f in ("brand", "model", "serial_number")
+    )
+
+    needs_review = (confidence < REVIEW_THRESHOLD) or (not identity_fields_present)
+
+    return ExtractedAssetFields(**data, needs_review=needs_review)
 
 
 async def extract_asset_fields(file: UploadFile) -> ExtractedAssetFields:
@@ -85,9 +105,4 @@ async def extract_asset_fields(file: UploadFile) -> ExtractedAssetFields:
         raise HTTPException(status_code=502, detail=f"OpenAI request failed: {e}") from e
 
     data = _parse_tool_call(response)
-    confidence = float(data.get("confidence", 0))
-
-    return ExtractedAssetFields(
-        **data,
-        needs_review=confidence < REVIEW_THRESHOLD,
-    )
+    return _normalize_and_flag(data)

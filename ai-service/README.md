@@ -15,10 +15,10 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env             # then fill in OPENAI_API_KEY
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8000
 ```
 
-Health check: `GET http://localhost:8001/health`
+Health check: `GET http://localhost:8000/health`
 
 ---
 
@@ -28,32 +28,33 @@ Health check: `GET http://localhost:8001/health`
 `multipart/form-data`, field name `file` (PDF invoice or JPG/PNG photo).
 
 ```bash
-curl -X POST http://localhost:8001/ai/registration/extract \
+curl -X POST http://localhost:1/ai/registration/extract \
   -F "file=@invoice.pdf"
 ```
 
 Response:
 ```json
 {
-  "brand": "Dell",
-  "model": "Latitude 5430",
-  "serial_number": "SN-88213",
-  "purchase_date": "2026-03-14",
-  "vendor": "CDW Corp",
-  "cost": 1249.0,
-  "warranty_months": 24,
+  "product_name": "Wireless Bluetooth Headphones",
+  "brand": null,
+  "model": null,
+  "serial_number": null,
+  "purchase_date": "2025-08-12",
+  "vendor": "ABC Retail Pvt Ltd",
+  "cost": 1499.0,
+  "warranty_months": null,
   "estimated_category": "Electronics",
-  "confidence": 0.94,
-  "needs_review": false
+  "confidence": 0.35,
+  "needs_review": true
 }
 ```
-`needs_review: true` when confidence < 0.6 — show a "please double check" banner instead of trusting the fields blindly.
+`needs_review: true` when confidence < 0.6, **or** when `brand`, `model`, and `serial_number` are all missing — this is forced server-side, not left to the model's self-reported confidence. Marketplace invoices (Flipkart, Amazon, etc.) often list a generic product description with no manufacturer info — in that case, `product_name` is provided as a fallback so the UI can still pre-fill the asset's **Name** field, while the form clearly flags itself as needing manual identification detail before saving.
 
 **This endpoint never writes to the database.** The frontend still calls your existing `POST /assets` once the user verifies and clicks "Register Asset".
 
 ### 2. `POST /ai/search`
 ```bash
-curl -X POST http://localhost:8001/ai/search \
+curl -X POST http://localhost:8000/ai/search \
   -H "Content-Type: application/json" \
   -d '{"query": "show idle laptops in HR"}'
 ```
