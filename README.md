@@ -229,7 +229,7 @@ python -m uvicorn app.main:app --reload --port 8000
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+MONGODB_URI=localhost:27017/AssetFlow
 NODE_ENV=development
 JWT_SECRET=your-jwt-secret-here-change-in-production
 JWT_EXPIRES_IN=7d
@@ -238,15 +238,13 @@ JWT_EXPIRES_IN=7d
 ### `ai-service/.env`
 
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+MONGODB_URI=localhost:27017/AssetFlow
 OPENAI_API_KEY=sk-your-openai-api-key
 OPENAI_EXTRACTION_MODEL=gpt-4.1
 OPENAI_SEARCH_MODEL=gpt-4.1-mini
 APP_ENV=development
 CORS_ORIGINS=http://localhost:5173
 ```
-
-> **Note:** Replace `<username>`, `<password>`, `<cluster>`, and `<dbname>` with your actual MongoDB Atlas credentials. Both the backend server and AI service connect to the **same** MongoDB database.
 
 ---
 
