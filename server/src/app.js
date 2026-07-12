@@ -14,7 +14,7 @@ app.get('/health', (req, res) => {
 });
 
 // Register API Routes here
-// e.g. app.use('/api/v1/users', require('./routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -24,7 +24,9 @@ app.use((req, res, next) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(err.status || 500).json({
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+        status: err.status || 'error',
         message: err.message || 'Internal Server Error',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
