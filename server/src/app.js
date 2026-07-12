@@ -25,6 +25,7 @@ app.use('/api/assets', require('./routes/assetRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/activity-logs', require('./routes/activityLogRoutes'));
+app.use('/api', require('./routes/auditRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {

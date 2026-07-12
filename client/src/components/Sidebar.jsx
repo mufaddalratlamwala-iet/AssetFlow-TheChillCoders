@@ -42,12 +42,7 @@ const Sidebar = ({ currentScreen, setCurrentScreen, user, onLogout }) => {
                 </div>
                 <NavLink id="allocation" label="Allocation" icon="assignment_ind" />
                 <NavLink id="booking" label="Booking" icon="event" />
-                <div className="space-y-1.5 opacity-40 pointer-events-none">
-                    <div className="flex items-center gap-4 px-4 py-2 text-on-surface-variant font-medium">
-                        <span className="material-symbols-outlined text-[20px]">fact_check</span>
-                        <span>Audit</span>
-                    </div>
-                </div>
+                <NavLink id="audit" label="Audit" icon="fact_check" />
             </nav>
             
             {/* User Profile Footer */}
