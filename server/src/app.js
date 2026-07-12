@@ -15,6 +15,9 @@ app.get('/health', (req, res) => {
 
 // Register API Routes here
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/departments', require('./routes/departmentRoutes'));
+app.use('/api/asset-categories', require('./routes/assetCategoryRoutes'));
+app.use('/api/employees', require('./routes/employeeRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -23,8 +26,12 @@ app.use((req, res, next) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
     const statusCode = err.statusCode || 500;
+    if (statusCode >= 500) {
+        console.error(err.stack);
+    } else {
+        console.warn(`[Client Error] ${statusCode}: ${err.message}`);
+    }
     res.status(statusCode).json({
         status: err.status || 'error',
         message: err.message || 'Internal Server Error',
