@@ -189,7 +189,6 @@ venv.bak/
 *.onnx
 *.pb
 *.keras
-models/
 data/
 datasets/
 

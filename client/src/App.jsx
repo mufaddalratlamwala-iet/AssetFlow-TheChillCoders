@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import OrganizationSetup from './components/OrganizationSetup';
+import AssetDirectory from './components/AssetDirectory';
+import Sidebar from './components/Sidebar';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentScreen, setCurrentScreen] = useState('org-setup');
 
   useEffect(() => {
     // Check if token exists in either localStorage or sessionStorage
@@ -45,7 +48,18 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  return <OrganizationSetup user={user} onLogout={handleLogout} />;
+  return (
+    <div className="bg-background text-on-surface font-body text-sm overflow-hidden h-screen flex">
+      <Sidebar 
+        currentScreen={currentScreen} 
+        setCurrentScreen={setCurrentScreen} 
+        user={user} 
+        onLogout={handleLogout} 
+      />
+      {currentScreen === 'org-setup' && <OrganizationSetup user={user} />}
+      {currentScreen === 'assets' && <AssetDirectory user={user} />}
+    </div>
+  );
 }
 
 export default App;
