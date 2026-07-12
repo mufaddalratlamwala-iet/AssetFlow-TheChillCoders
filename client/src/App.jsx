@@ -3,6 +3,7 @@ import Login from './components/Login';
 import OrganizationSetup from './components/OrganizationSetup';
 import AssetDirectory from './components/AssetDirectory';
 import Reports from './components/Reports';
+import Notifications from './components/Notifications';
 import Sidebar from './components/Sidebar';
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
       {currentScreen === 'org-setup' && <OrganizationSetup user={user} />}
       {currentScreen === 'assets' && <AssetDirectory user={user} />}
       {currentScreen === 'reports' && <Reports user={user} />}
+      {currentScreen === 'notifications' && <Notifications user={user} />}
     </div>
   );
 }

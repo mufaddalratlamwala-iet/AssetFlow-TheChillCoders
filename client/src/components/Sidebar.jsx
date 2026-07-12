@@ -32,6 +32,9 @@ const Sidebar = ({ currentScreen, setCurrentScreen, user, onLogout }) => {
                 {user && ['Admin', 'Asset Manager', 'Department Head'].includes(user.role) && (
                     <NavLink id="reports" label="Reports" icon="analytics" />
                 )}
+                {user && (
+                    <NavLink id="notifications" label="Notifications" icon="notifications" />
+                )}
                 
                 {/* Disabled nav links representing other features in design */}
                 <div className="pt-4 border-t border-outline-variant/30 mt-4 space-y-1.5 opacity-40 pointer-events-none">

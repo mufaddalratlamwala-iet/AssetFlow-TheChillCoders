@@ -27,6 +27,8 @@ const activityLogSchema = new mongoose.Schema({
     timestamps: true
 });
 
+activityLogSchema.index({ employeeId: 1, createdAt: -1 });
+
 const ActivityLog = mongoose.model('ActivityLog', activityLogSchema);
 
 module.exports = ActivityLog;
