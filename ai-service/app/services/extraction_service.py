@@ -1,7 +1,7 @@
 import base64
 import json
 
-from fastapi import UploadFile, HTTPException, logger
+from fastapi import UploadFile, HTTPException
 
 from app.config import settings
 from app.openai_client import client
@@ -13,7 +13,9 @@ REVIEW_THRESHOLD = 0.6
 IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 PDF_MIME_TYPE = "application/pdf"
 
+import logging
 
+logger = logging.getLogger(__name__)
 def _build_input_content(file_bytes: bytes, mime_type: str) -> list[dict]:
 
     b64 = base64.b64encode(file_bytes).decode("utf-8")
