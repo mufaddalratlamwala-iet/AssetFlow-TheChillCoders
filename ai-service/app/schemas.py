@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 
 class ExtractedAssetFields(BaseModel):
+    product_name: Optional[str] = None
     brand: Optional[str] = None
     model: Optional[str] = None
     serial_number: Optional[str] = None
@@ -12,7 +13,7 @@ class ExtractedAssetFields(BaseModel):
     warranty_months: Optional[int] = None
     estimated_category: Optional[str] = None
     confidence: float
-    needs_review: bool = False  # true when confidence < REVIEW_THRESHOLD
+    needs_review: bool = False  # true when confidence < REVIEW_THRESHOLD, or core identity fields are missing
 
 
 class SearchRequest(BaseModel):
