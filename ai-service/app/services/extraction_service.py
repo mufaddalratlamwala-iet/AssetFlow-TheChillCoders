@@ -1,7 +1,7 @@
 import base64
 import json
 
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile, HTTPException, logger
 
 from app.config import settings
 from app.openai_client import client
@@ -74,7 +74,7 @@ def _normalize_and_flag(data: dict) -> ExtractedAssetFields:
 
         if data.get("warranty_months") == 0:
             data["warranty_months"] = None
-            
+
     confidence = float(data.get("confidence", 0))
     identity_fields_present = any(
         data.get(f) for f in ("brand", "model", "serial_number")
@@ -94,9 +94,15 @@ async def extract_asset_fields(file: UploadFile) -> ExtractedAssetFields:
     mime_type = file.content_type or "application/octet-stream"
     content = _build_input_content(file_bytes, mime_type)
 
+    logger.info(
+        "Extracting asset from %s (%d bytes)",
+        mime_type,
+        len(file_bytes),
+    )
+        
     try:
         response = client.responses.create(
-            model=settings.openai_model,
+            model=settings.openai_extraction_model,
             input=[{"role": "user", "content": content}],
             tools=[EXTRACT_ASSET_FIELDS_TOOL],
             tool_choice={"type": "function", "name": "extract_asset_fields"},
@@ -105,4 +111,7 @@ async def extract_asset_fields(file: UploadFile) -> ExtractedAssetFields:
         raise HTTPException(status_code=502, detail=f"OpenAI request failed: {e}") from e
 
     data = _parse_tool_call(response)
+
+    logger.info("Extraction Result: %s", data)
+    
     return _normalize_and_flag(data)

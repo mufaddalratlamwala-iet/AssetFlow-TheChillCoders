@@ -2,14 +2,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """
-    Loaded from environment variables / .env file.
-    Backend team: copy .env.example -> .env and fill in OPENAI_API_KEY.
-    """
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    mongodb_uri: str
     openai_api_key: str
-    openai_model: str = "gpt-4.1"
+    openai_extraction_model: str = "gpt-4.1"
+    openai_search_model: str = "gpt-4.1-mini"
 
     app_env: str = "development"
     cors_origins: str = "http://localhost:5173"
